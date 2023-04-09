@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../components/tinyobj/include/tinyobj/tiny_obj_loader.h
+map
+-
+string
+-
+vector
+-
+cassert
+-
+cctype
+-
+cmath
+-
+cstddef
+-
+cstdlib
+-
+cstring
+-
+limits
+-
+utility
+-
+fstream
+-
+sstream
+-
+iostream
+-
+
+/home/liam/dev/rbd/addons/Pangolin/components/tinyobj/src/tinyobj.cpp
+tinyobj/tiny_obj_loader.h
+-
+

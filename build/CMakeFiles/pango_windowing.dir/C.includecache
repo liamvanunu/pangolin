@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/liam/dev/rbd/addons/Pangolin/build/xdg-shell-protocol.c
+stdlib.h
+-
+stdint.h
+-
+wayland-util.h
+/home/liam/dev/rbd/addons/Pangolin/build/wayland-util.h
+
