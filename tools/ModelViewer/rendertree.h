@@ -88,7 +88,7 @@ void render_tree(pangolin::GlSlProgram& prog, RenderNode& node, const pangolin::
 {
     if(node.item) {
         prog.SetUniform("KT_cw", K * T_camera_node);
-        prog.SetUniform("T_cam_norm", T_camera_node );
+        //prog.SetUniform("T_cam_norm", T_camera_node );
         node.item->Render(prog, matcap);
     }
     for(auto& e : node.edges) {

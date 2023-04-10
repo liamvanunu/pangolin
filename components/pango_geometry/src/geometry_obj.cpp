@@ -170,7 +170,8 @@ pangolin::Geometry LoadGeometryObj(const std::string& filename)
         auto& verts = geom.buffers["geometry"];
         Image<float> new_vs, new_ns, new_cs, new_ts;
         {
-            verts.Reinitialise(sizeof(float)*(tiny_vs.w + tiny_ns.w + tiny_cs.w + tiny_ts.w),num_unique_verts);
+//            verts.Reinitialise(sizeof(float)*(tiny_vs.w + tiny_ns.w + tiny_cs.w + tiny_ts.w),num_unique_verts);
+            verts.Reinitialise(sizeof(float)*(tiny_vs.w + tiny_ts.w),num_unique_verts);
             size_t float_offset = 0;
             if(tiny_vs.IsValid()) {
                 new_vs = verts.UnsafeReinterpret<float>().SubImage(float_offset,0,3,num_unique_verts);
@@ -180,22 +181,22 @@ pangolin::Geometry LoadGeometryObj(const std::string& filename)
                     new_vs.Row(el.second).CopyFrom(tiny_vs.Row(el.first.vertex_index));
                 }
             }
-            if(tiny_ns.IsValid()) {
-                new_ns = verts.UnsafeReinterpret<float>().SubImage(float_offset,0,3,num_unique_verts);
-                verts.attributes["normal"] = new_ns;
-                float_offset += 3;
-                for (auto& el : reindex_map) {
-                    new_ns.Row(el.second).CopyFrom(tiny_ns.Row(el.first.normal_index));
-                }
-            }
-            if(tiny_cs.IsValid()) {
-                new_cs = verts.UnsafeReinterpret<float>().SubImage(float_offset,0,3,num_unique_verts);
-                verts.attributes["color"] = new_cs;
-                float_offset += 3;
-                for (auto& el : reindex_map) {
-                    new_cs.Row(el.second).CopyFrom(tiny_cs.Row(el.first.vertex_index));
-                }
-            }
+//            if(tiny_ns.IsValid()) {
+//                new_ns = verts.UnsafeReinterpret<float>().SubImage(float_offset,0,3,num_unique_verts);
+//                verts.attributes["normal"] = new_ns;
+//                float_offset += 3;
+//                for (auto& el : reindex_map) {
+//                    new_ns.Row(el.second).CopyFrom(tiny_ns.Row(el.first.normal_index));
+//                }
+//            }
+//            if(tiny_cs.IsValid()) {
+//                new_cs = verts.UnsafeReinterpret<float>().SubImage(float_offset,0,3,num_unique_verts);
+//                verts.attributes["color"] = new_cs;
+//                float_offset += 3;
+//                for (auto& el : reindex_map) {
+//                    new_cs.Row(el.second).CopyFrom(tiny_cs.Row(el.first.vertex_index));
+//                }
+//            }
             if(tiny_ts.IsValid()) {
                 new_ts = verts.UnsafeReinterpret<float>().SubImage(float_offset,0,2,num_unique_verts);
                 verts.attributes["uv"] = new_ts;

@@ -14,7 +14,7 @@
 
 #include <pangolin/utils/argagg.hpp>
 
-#include "shader.h"
+#include "TextureShader.h"
 #include "rendertree.h"
 #include "util.h"
 
@@ -243,14 +243,8 @@ int main(int argc, char **argv) {
     enum class RenderMode {
         uv = 0, tex, color, normal, matcap, vertex, num_modes
     };
-    const std::string mode_names[] = {"SHOW_UV", "SHOW_TEXTURE", "SHOW_COLOR", "SHOW_NORMAL", "SHOW_MATCAP",
-                                      "SHOW_VERTEX"};
     const std::string spin_names[] = {"NONE", "NEGX", "X", "NEGY", "Y", "NEGZ", "Z"};
     const char mode_key[] = {'u', 't', 'c', 'n', 'm', 'v'};
-    RenderMode current_mode = RenderMode::normal;
-    for (int i = 0; i < (int) RenderMode::num_modes; ++i)
-        if (pangolin::ToUpperCopy(args["mode"].as<std::string>("SHOW_NORMAL")) == mode_names[i])
-            current_mode = RenderMode(i);
     pangolin::AxisDirection spin_direction = pangolin::AxisNone;
     for (int i = 0; i <= (int) pangolin::AxisZ; ++i)
         if (pangolin::ToUpperCopy(args["spin"].as<std::string>("none")) == spin_names[i])
@@ -347,27 +341,16 @@ int main(int argc, char **argv) {
 
     // GlSl Graphics shader program for display
     pangolin::GlSlProgram default_prog;
-    auto LoadProgram = [&](const RenderMode mode) {
-        current_mode = mode;
+    auto LoadProgram = [&]() {
         default_prog.ClearShaders();
-        std::map<std::string, std::string> prog_defines;
-        for (int i = 0; i < (int) RenderMode::num_modes - 1; ++i) {
-            prog_defines[mode_names[i]] = std::to_string((int) mode == i);
-        }
-        default_prog.AddShader(pangolin::GlSlAnnotatedShader, default_model_shader, prog_defines);
+        default_prog.AddShader(pangolin::GlSlAnnotatedShader, shader);
         default_prog.Link();
     };
-    LoadProgram(current_mode);
-
-    pangolin::GlSlProgram env_prog;
-    if (envmaps.size()) {
-        env_prog.AddShader(pangolin::GlSlAnnotatedShader, equi_env_shader);
-        env_prog.Link();
-    }
+    LoadProgram();
 
     // Setup keyboard shortcuts.
     for (int i = 0; i < (int) RenderMode::num_modes; ++i)
-        pangolin::RegisterKeyPressCallback(mode_key[i], [&, i]() { LoadProgram((RenderMode) i); });
+        pangolin::RegisterKeyPressCallback(mode_key[i], [&, i]() { LoadProgram(); });
 
     pangolin::RegisterKeyPressCallback(PANGO_SPECIAL + PANGO_KEY_RIGHT, [&]() {
         if (renderables.size())
@@ -427,41 +410,6 @@ int main(int argc, char **argv) {
                 glEnable(GL_CULL_FACE);
                 glCullFace(GL_BACK);
             }
-
-            if (env_prog.Valid()) {
-                glDisable(GL_DEPTH_TEST);
-                env_prog.Bind();
-                const Eigen::Matrix4d mvmat = s_cam.GetModelViewMatrix();
-                const Eigen::Matrix3f R_env_cam = mvmat.block<3, 3>(0, 0).cast<float>().transpose();
-                Eigen::Matrix3f Kinv;
-                Kinv << 1.0 / f, 0.0, -(w / 2.0) / f,
-                        0.0, 1.0 / f, -(h / 2.0) / f,
-                        0.0, 0.0, 1.0;
-
-                env_prog.SetUniform("R_env_camKinv", (R_env_cam * Kinv).eval());
-
-                const GLint vertex_handle = env_prog.GetAttributeHandle("vertex");
-                const GLint xy_handle = env_prog.GetAttributeHandle("xy");
-
-                if (vertex_handle >= 0 && xy_handle >= 0) {
-                    glActiveTexture(GL_TEXTURE0);
-                    envmaps[envmap_index].Bind();
-                    const GLfloat ndc[] = {1.0f, 1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f};
-                    const GLfloat pix[] = {0.0f, 0.0f, w, 0.0f, w, h, 0.0f, h};
-
-                    glEnableVertexAttribArray(vertex_handle);
-                    glVertexAttribPointer(vertex_handle, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), ndc);
-                    glEnableVertexAttribArray(xy_handle);
-                    glVertexAttribPointer(xy_handle, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), pix);
-                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-                    glDisableVertexAttribArray(vertex_handle);
-                    glDisableVertexAttribArray(xy_handle);
-
-                    env_prog.Unbind();
-                    glEnable(GL_DEPTH_TEST);
-                }
-            }
-
             render_tree(
                     default_prog, root, s_cam.GetProjectionMatrix(), s_cam.GetModelViewMatrix(),
                     matcaps.size() ? &matcaps[matcap_index] : nullptr

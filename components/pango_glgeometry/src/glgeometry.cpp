@@ -96,6 +96,7 @@ namespace pangolin {
     {
         // Bind textures
         int num_tex_bound = 0;
+
         for(auto& tex : geom.textures) {
             glActiveTexture(GL_TEXTURE0 + num_tex_bound);
             tex.second.Bind();
