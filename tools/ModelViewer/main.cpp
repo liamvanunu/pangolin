@@ -118,7 +118,6 @@ int main(int argc, char **argv) {
     Eigen::Vector3d Pick_w = handler.Selected_P_w();
     std::vector<Eigen::Vector3d> Picks_w;
     cv::Mat Twc;
-    default_prog.Bind();
 
     while (!pangolin::ShouldQuit()) {
         if ((handler.Selected_P_w() - Pick_w).norm() > 1E-6) {
@@ -138,8 +137,10 @@ int main(int argc, char **argv) {
                 glEnable(GL_CULL_FACE);
                 glCullFace(GL_BACK);
             }
+            default_prog.Bind();
             default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
             pangolin::GlDraw( default_prog, geomToRender );
+            default_prog.Unbind();
 
             s_cam.Apply();
             if (show_x0) pangolin::glDraw_x0(10.0, 10);
@@ -153,7 +154,6 @@ int main(int argc, char **argv) {
 
         pangolin::FinishFrame();
     }
-    default_prog.Unbind();
 
     return 0;
 }
