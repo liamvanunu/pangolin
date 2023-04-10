@@ -296,6 +296,7 @@ int main(int argc, char **argv) {
 
     // Pull one piece of loaded geometry onto the GPU if ready
     Eigen::AlignedBox3f total_aabb;
+    std::shared_ptr<GlGeomRenderable> renderable;
     auto LoadGeometryToGpu = [&]() {
         for (auto &future_geom: geom_to_load) {
             if (future_geom.valid() && is_ready(future_geom)) {
@@ -313,32 +314,11 @@ int main(int argc, char **argv) {
                 const auto proj = pangolin::ProjectionMatrix(w, h, f, f, w / 2.0, h / 2.0, near, far);
                 s_cam.SetModelViewMatrix(mvm);
                 s_cam.SetProjectionMatrix(proj);
-
-                auto renderable = std::make_shared<GlGeomRenderable>(pangolin::ToGlGeometry(geom), aabb);
-                renderables.push_back(renderable);
-                RenderNode::Edge edge = {spin_transform, {renderable, {}}};
-                root.edges.emplace_back(std::move(edge));
+                renderable = std::make_shared<GlGeomRenderable>(pangolin::ToGlGeometry(geom), aabb);
                 break;
             }
         }
     };
-
-    // Load Any matcap materials
-    size_t matcap_index = 0;
-    std::vector<pangolin::GlTexture> matcaps = TryLoad<pangolin::GlTexture>(ExpandGlobOption(args["matcap"]),
-                                                                            [](const std::string &f) {
-                                                                                return pangolin::GlTexture(
-                                                                                        pangolin::LoadImage(f));
-                                                                            });
-
-    // Load Any Environment maps
-    size_t envmap_index = 0;
-    std::vector<pangolin::GlTexture> envmaps = TryLoad<pangolin::GlTexture>(ExpandGlobOption(args["envmap"]),
-                                                                            [](const std::string &f) {
-                                                                                return pangolin::GlTexture(
-                                                                                        pangolin::LoadImage(f));
-                                                                            });
-
     // GlSl Graphics shader program for display
     pangolin::GlSlProgram default_prog;
     auto LoadProgram = [&]() {
@@ -347,10 +327,6 @@ int main(int argc, char **argv) {
         default_prog.Link();
     };
     LoadProgram();
-
-    // Setup keyboard shortcuts.
-    for (int i = 0; i < (int) RenderMode::num_modes; ++i)
-        pangolin::RegisterKeyPressCallback(mode_key[i], [&, i]() { LoadProgram(); });
 
     pangolin::RegisterKeyPressCallback(PANGO_SPECIAL + PANGO_KEY_RIGHT, [&]() {
         if (renderables.size())
@@ -361,19 +337,6 @@ int main(int argc, char **argv) {
             show_renderable((mesh_to_show + renderables.size() - 1) % renderables.size());
     });
     pangolin::RegisterKeyPressCallback(' ', [&]() { show_renderable(-1); });
-
-    if (matcaps.size()) {
-        pangolin::RegisterKeyPressCallback('=', [&]() { matcap_index = (matcap_index + 1) % matcaps.size(); });
-        pangolin::RegisterKeyPressCallback('-', [&]() {
-            matcap_index = (matcap_index + matcaps.size() - 1) % matcaps.size();
-        });
-    }
-    if (envmaps.size()) {
-        pangolin::RegisterKeyPressCallback(']', [&]() { envmap_index = ((envmap_index + 1) % envmaps.size()); });
-        pangolin::RegisterKeyPressCallback('[', [&]() {
-            envmap_index = ((envmap_index + envmaps.size() - 1) % envmaps.size());
-        });
-    }
     pangolin::RegisterKeyPressCallback('s', [&]() { std::swap(spin_transform->dir, spin_other); });
     pangolin::RegisterKeyPressCallback('b', [&]() { show_bounds = !show_bounds; });
     pangolin::RegisterKeyPressCallback('0', [&]() { cull_backfaces = !cull_backfaces; });
@@ -410,10 +373,10 @@ int main(int argc, char **argv) {
                 glEnable(GL_CULL_FACE);
                 glCullFace(GL_BACK);
             }
-            render_tree(
-                    default_prog, root, s_cam.GetProjectionMatrix(), s_cam.GetModelViewMatrix(),
-                    matcaps.size() ? &matcaps[matcap_index] : nullptr
-            );
+            default_prog.SetUniform("KT_cw",  s_cam.GetProjectionMatrix() *  s_cam.GetModelViewMatrix());
+            if (renderable){
+                renderable->Render(default_prog);
+            }
             // std::cout << "Projection Matrix: " << s_cam.GetProjectionMatrix() << std::endl;
             // std::cout << "Model View Matrix: " << s_cam.GetModelViewMatrix() << std::endl;
             Eigen::Matrix4d mv_mat = s_cam.GetModelViewMatrix();

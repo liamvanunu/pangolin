@@ -9,7 +9,7 @@ struct Renderable
 {
     virtual ~Renderable() {}
     Renderable() : show(true) {}
-    virtual void Render(pangolin::GlSlProgram& /*prog*/, const pangolin::GlTexture* /*matcap*/) const {}
+    virtual void Render(pangolin::GlSlProgram& /*prog*/) const {}
     inline virtual Eigen::AlignedBox3f GetAABB() const {
         return Eigen::AlignedBox3f();
     }
@@ -23,9 +23,9 @@ struct GlGeomRenderable : public Renderable
     {
     }
 
-    void Render(pangolin::GlSlProgram& prog, const pangolin::GlTexture* matcap) const override {
+    void Render(pangolin::GlSlProgram& prog) const override {
         if(show) {
-            pangolin::GlDraw( prog, glgeom, matcap );
+            pangolin::GlDraw( prog, glgeom );
         }
     }
 
@@ -84,14 +84,14 @@ struct SpinTransform : public RenderableTransform
 };
 
 using RenderNode = pangolin::TreeNode<std::shared_ptr<Renderable>,std::shared_ptr<RenderableTransform>>;
-void render_tree(pangolin::GlSlProgram& prog, RenderNode& node, const pangolin::OpenGlMatrix& K, const pangolin::OpenGlMatrix& T_camera_node, pangolin::GlTexture* matcap)
+void render_tree(pangolin::GlSlProgram& prog, RenderNode& node, const pangolin::OpenGlMatrix& K, const pangolin::OpenGlMatrix& T_camera_node)
 {
     if(node.item) {
         prog.SetUniform("KT_cw", K * T_camera_node);
         //prog.SetUniform("T_cam_norm", T_camera_node );
-        node.item->Render(prog, matcap);
+        node.item->Render(prog);
     }
     for(auto& e : node.edges) {
-        render_tree(prog, e.node, K, T_camera_node * (pangolin::OpenGlMatrix)e.parent_child->GetT_pc(), matcap);
+        render_tree(prog, e.node, K, T_camera_node * (pangolin::OpenGlMatrix)e.parent_child->GetT_pc());
     }
 }

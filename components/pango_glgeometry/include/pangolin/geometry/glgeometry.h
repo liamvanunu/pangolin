@@ -82,6 +82,6 @@ GlGeometry::Element ToGlGeometry(const Geometry::Element& el, GlBufferType buffe
 
 GlGeometry ToGlGeometry(const Geometry& geom);
 
-void GlDraw(GlSlProgram& prog, const GlGeometry& geom, const GlTexture *matcap);
+void GlDraw(GlSlProgram& prog, const GlGeometry& geom);
 
 }

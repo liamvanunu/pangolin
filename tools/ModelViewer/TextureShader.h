@@ -21,10 +21,10 @@ const std::string shader = R"Shader(
 @start fragment
 #version 120
     varying vec2 vUV;
-    uniform sampler2D texture_0;
+    uniform sampler2D texture;
 
 void main() {
-    gl_FragColor = texture2D(texture_0, vUV);
+    gl_FragColor = texture2D(texture, vUV);
 }
 )Shader";
 }
