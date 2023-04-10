@@ -105,7 +105,7 @@ pangolin::Geometry LoadGeometryObj(const std::string& filename)
             if(!materials[i].diffuse_texname.empty()) {
               const std::string tex_name = FormatString("texture_%",i);
               try {
-                TypedImage& tex_image = geom.textures[tex_name];
+                TypedImage& tex_image = geom.textures[materials[i].name];
                 tex_image = LoadImage(PathParent(filename) + "/" + materials[i].diffuse_texname);
                 const int row_bytes = tex_image.w * tex_image.fmt.bpp / 8;
                 std::vector<unsigned char> tmp_row(row_bytes);
